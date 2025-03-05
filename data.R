@@ -32,7 +32,7 @@ library(r4ss)
 # In the following, the area outside is evaluated first.
 
 dir01 <- "boot/data/Lastyear"
-run = "control.SS"
+run = "ane.27.9aS"
 stk = window(ss3om::readFLSss3(dir01))
 stk = simplify(stk)
 # Fill NAs
@@ -41,6 +41,13 @@ stk@harvest.spwn[] = 0
 sr = ss3om::readFLSRss3(dir01,run) #A function to read the stock-recruit relationships from an SS3 run into an FLSR object
 stk@name = run
 stk@desc = "2024, ICES, SS3"
+
+
+
+plot(stk)
+
+
+
 out = ss3om::readOutputss3(dir01)
 
 
@@ -60,7 +67,7 @@ idxs =ss3om::readFLIBss3(dir01) # FLIndexBiomass
 
 ## Retune Stock-Recruitment
 
-run = "control.SS"
+run = "ane.27.9aS"
 load(file=file.path("rdata",paste0(run,".rdata")),verbose = T)
 stka = stk
 
@@ -72,7 +79,7 @@ B0 = params(sr)[3, 2, drop=TRUE]
 # single sex
 sr1 = srrTMB(as.FLSR(stka,
                      model=bevholtSV),
-             spr0=mean(spr0y(stk)),
+             #spr0=mean(spr0y(stk)),
              r0.pr=c(R0,0.0001),
              s=s,
              s.est=F)
