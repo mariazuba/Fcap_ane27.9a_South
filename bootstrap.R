@@ -1,13 +1,7 @@
 
 # Script information ------------------------------------------------------
-# Title: Stock assessment for anchovy 9a South (ICES WGHANSA)
-#        1) TAF bootstrap procedure to set up required data and software
-
-# See also: https://github.com/ices-taf/doc/wiki/Creating-a-TAF-analysis 
-
-# Authors: María José Zúñiga (maria.zuniga@ieo.csic.es) 
-
-# Date: 2024 november
+#bootstrap/initial
+#The essential inputs for the analysis include the result of the stock assessment model fit and the current set of reference points.
 
 # Load libraries ----------------------------------------------------------
 library("icesTAF")  # Load the ICES Transparent Assessment Framework (TAF) package
@@ -16,18 +10,18 @@ library("r4ss")     # Load the r4ss package for working with Stock Synthesis (SS
 
 getwd()
 
-# Create repository and R project -----------------------------------------
-# Clone the github repository created by ICES secretariat
-# The cloned repository is in D:/GitHUB/ices-taf/2023_hom.27.9a_assessment
-# Create an R project in that folder
+
 
 # Make the skeleton -------------------------------------------------------
 
 # create initial directories and R scripts for a new TAF analysis
-# 2023_hom.27.8c9a_assessment    
+  
 # ¦--bootstrap   
-# ¦   --initial 
-# ¦       --data
+# ¦   ¦--initial 
+# ¦   ¦   `--data
+# ¦   ¦       `-- ane27.9aS.rda  - Input dataset
+# ¦   ¦-- references.bib
+# |.  |--DATA.bib
 # ¦--data.R      
 # ¦--model.R     
 # ¦--output.R    
@@ -37,9 +31,6 @@ getwd()
 
 # Upload initial data -----------------------------------------------------
 
-# Include data in the folder: \bootstrap\initial\data 
-# Include all five input files needed to run Stock Synthesis
-# It can be done by-hand or copying it using the following command:
 
 
 # Create a DATA.bib file with metadata about the data used
@@ -53,33 +44,6 @@ draft.data(
 )
 
 # Bootstrap the data from the boot/data folder
-taf.bootstrap()
-
-# Document software and create the software.bib file ----------------------
-
-# use function draft.software to create the software.bib file
-
-# ?draft.software
-
-# document the SS3 model
-dir <- "boot/initial/software"       # Define the directory for the software
-mkdir(dir)
-# Optionally, download the SS3 executable for a specific version
-r4ss::get_ss3_exe("boot/initial/software", version = "v3.30.22.1")
-
-# Draft the software metadata
-draft.software(c('boot/initial/software/ss3'), file = TRUE)
-
-# Process the data.bib and software.bib metafiles -------------------------
-
-# the function taf.bootstrap() processes:
-#   the data.bib file and creates/copies all the data files into the folder "bootstrap/data"
-#   and 
-#   the software.bib file and creates/copies the software into the folder bootstrap/software
-# ?taf.bootstrap
-
-# apply taf.bootstrap
-
 taf.bootstrap()
 
 # Session info ------------------------------------------------------------

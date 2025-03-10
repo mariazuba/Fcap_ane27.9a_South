@@ -1,4 +1,4 @@
-## Extract results of interest, write TAF output tables
+## Quantification of performance, summary outputs
 
 ## Before:
 ## After:

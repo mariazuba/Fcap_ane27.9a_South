@@ -1,17 +1,19 @@
-## Preprocess data, write TAF data tables
+# data.R - condition OM(s)
+# WKREBUILD_toolset/data.R
 
-## Before:
-## After:
+# Copyright (c) WUR, 2023.
+# Author: Iago MOSQUEIRA (WMR) <iago.mosqueira@wur.nl>
+#
+# Distributed under the terms of the EUPL-1.2
+
 
 library(icesTAF)
-
 mkdir("data")
 
-# Load packages
-
+library(mse)
+library(FLSRTMB)
 library(FLBRP)
 library(FLasher)
-library(FLSRTMB)
 library(ss3om)
 library(ss3diags)
 library(ggpubr)
@@ -24,63 +26,89 @@ library(ggpubr)
 library(mseviz)
 library(r4ss)
 
-# Build FLStock
+# CHOOSE number of cores for doFuture / doParallel
+cores <- 3
 
-# SS3 outputs are loaded with the `readFLSss3()` into an `FLStock` object. 
-# The folder that contains the model outputs has to be specified.
-# 
-# In the following, the area outside is evaluated first.
+source("utilities.R")
 
-dir01 <- "boot/data/Lastyear"
-run = "ane.27.9aS"
-stk = window(ss3om::readFLSss3(dir01))
-stk = simplify(stk)
-# Fill NAs
-stk@m.spwn[] = 0
-stk@harvest.spwn[] = 0 
-sr = ss3om::readFLSRss3(dir01,run) #A function to read the stock-recruit relationships from an SS3 run into an FLSR object
-stk@name = run
-stk@desc = "2024, ICES, SS3"
+# LOAD AAP SA results, 2022 ICES WGNSSK sol.27.4
+load('boot/data/sol274.rda')
+
+# INTERMEDIATE year
+iy <- 2023
+
+# DATA year
+dy <- iy - 1
+
+# FINAL year
+fy <- 2042
+
+# NUMBER of iterations
+it <- 5 #500
+
+set.seed(987)
+
+#'*===========================================================*
+# - Stock-recruitment relationship(s) ----
+#'*===========================================================*
+#'
+# FIT models
+fits <- srrTMB(as.FLSR(run, 
+                       model=bevholtSV), 
+               spr0=mean(spr0y(run)))
+
+# PLOT
+plotsrs(fits)
+
+# BOOTSTRAP and SELECT model by largest logLik **
+srpars <- bootstrapSR(run, 
+                      iters=it,
+                      model=bevholtSV,
+                      method="best")
+
+# SAVE
+save(fits, srpars, file="data/bootstrap.rda", compress="xz")
 
 
+#'*===========================================================*
+# - CONSTRUCT OM ----
+#'*===========================================================*
 
-plot(stk)
+# GENERATE future deviances: lognormal autocorrelated **
+srdevs <- rlnormar1(sdlog=srpars$sigmaR, 
+                    rho=srpars$rho,
+                    years=seq(dy, fy))
+
+plot(srdevs)
+
+# BUILD FLom
+om <- FLom(stock=propagate(run, it), 
+           refpts=refpts, 
+           model='mixedsrr',
+           params=srpars, 
+           deviances=srdevs)
+
+# SETUP om future: average of last 3 years **
+om <- fwdWindow(om, end=fy)
+
+# SET stochastic rec dy
+rec(stock(om))[, '2022'] <- rec(om)[1, '2022'] * srdevs[, '2022']
+
+# PROJECT forward for iy assumption
+om <- fwd(om, catch=FLQuant(4289.2, dimnames=list(year=2023)))
+
+# F and SSB deviances
+sdevs <- shortcut_devs(om, Fcv=0.212, Fphi=0.423, SSBcv=0.10)
 
 
+# - CONSTRUCT iem, implementation error module w/10% noise **
 
-out = ss3om::readOutputss3(dir01)
+iem <- FLiem(method=noise.iem,
+             args=list(noise=rlnorm(500, rec(om) %=% 0, 0.1)))
 
+#'*===========================================================*
+# - SAVE ----
+#'*===========================================================*
+save(om, iem, sdevs, file="data/data.rda", compress="xz")
 
-rdata_path <- file.path(getwd(), "rdata")
-
-if (!dir.exists(rdata_path)) {
-  dir.create(rdata_path)
-}
-
-save(stk,  sr, out, file = file.path(rdata_path, paste0(run, ".rdata")))
-
-
-
-ss3rep = SS_output(dir01)
-idxs =ss3om::readFLIBss3(dir01) # FLIndexBiomass
-
-
-## Retune Stock-Recruitment
-
-run = "ane.27.9aS"
-load(file=file.path("rdata",paste0(run,".rdata")),verbose = T)
-stka = stk
-
-# Extract SR pars
-s = params(sr)[1, 2, drop=TRUE]
-R0 = params(sr)[2, 2, drop=TRUE]
-B0 = params(sr)[3, 2, drop=TRUE]
-
-# single sex
-sr1 = srrTMB(as.FLSR(stka,
-                     model=bevholtSV),
-             #spr0=mean(spr0y(stk)),
-             r0.pr=c(R0,0.0001),
-             s=s,
-             s.est=F)
-
+plan(sequential)

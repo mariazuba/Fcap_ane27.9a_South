@@ -1,4 +1,4 @@
-## Prepare plots and tables for report
+## Plotting
 
 ## Before:
 ## After:

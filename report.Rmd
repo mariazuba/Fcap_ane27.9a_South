@@ -1,0 +1,112 @@
+---
+title: "Guía MO boquerón"
+output:
+  pdf_document:
+    keep_tex: true
+---
+
+
+# Instalación
+
+La última versión de los paquetes FLR requeridos, junto con todas sus dependencias, se puede instalar desde la página FLR R-universe ejecutando:
+
+```{r eval=FALSE}
+install.packages("icesTAF")
+
+install.packages(icesTAF::deps(), repos=c(
+  FLR="https://flr.r-universe.dev",
+  CRAN="https://cloud.r-project.org/"))
+
+```
+
+
+También se pueden instalar desde el código fuente en los repositorios de FLR en GitHub ejecutando:
+
+```{r eval=F}
+remotes::install_github(paste0("flr/", c("FLCore", "ggplotFL", "FLFishery", "FLasher", "FLSRTMB", "mse", "mseviz")))
+
+```
+
+
+# Configuración
+
+## Informe de progreso
+
+El paquete `mse` permite configurar notificaciones sobre el progreso de cálculos largos mediante `progressr`. Puedes solicitar que se muestre una barra de progreso para las llamadas a las funciones `mp()`, `mps()` y `bootstrapSR` de la siguiente manera:
+
+```{r eval=FALSE}
+library(progressr)
+handlers(global=TRUE)
+handlers("progress")
+
+```
+
+
+## Paralelización
+
+Las llamadas a varias funciones del paquete `mse` (`mp` y `mps`) pueden acelerarse mediante paralelización. Para una única llamada a `mp()`, las iteraciones se dividen en bloques distribuidos entre los núcleos disponibles. En el caso de `mps()`, cada procedimiento se ejecuta en un proceso separado en los núcleos disponibles.
+
+Si la variable `cores` está definida en `data.R` o `model.R`, la llamada a `plan()` en `utilities.R` configurará un plan de ejecución en `multisession`. Para más información, consulta la página de ayuda de `plan`.
+
+El número de núcleos a utilizar debe elegirse teniendo en cuenta la memoria disponible. El rendimiento será bajo si demasiados núcleos intentan usar muy poca memoria.
+
+## Ejecutar el código
+
+Una vez que el repositorio ha sido clonado, solo se necesitan dos pasos para ejecutar el código de ejemplo, una vez que icesTAF ha sido cargado:
+
+```{r eval=FALSE}
+library(icesTAF)
+
+# Ejecutar los pasos de arranque del repositorio (datos)
+taf.bootstrap()
+
+# Cargar y ejecutar todos los scripts de R en orden
+make.all()
+
+```
+
+# Repositorio TAF
+
+## Descripción del repositorio
+
+Un nuevo repositorio debe contener la siguiente estructura de carpetas y archivos, que incluye solo los archivos de datos iniciales, el archivo DATA.bib correspondiente, un archivo BibTeX con referencias bibliográficas relevantes y los scripts necesarios para ejecutar el análisis. Estos elementos están basados en el conjunto de datos de ejemplo `sol.27.4` y deberán adaptarse para un stock diferente.
+
+```
+|-- bootstrap
+|   |-- initial
+|   |   `-- data
+|   |       `-- sol274.rda  - Conjunto de datos de entrada
+|   |-- references.bib
+|   `-- DATA.bib
+|-- data.R - Condicionamiento del Modelo Operativo
+|-- model.R - Evaluación de los Procedimientos de Gestión
+|-- output.R - Cuantificación del desempeño, resultados resumidos
+|-- report.R - Generación de gráficos
+|-- report.Rmd
+|-- trove.R - Colección de alternativas
+`-- utilities.R - Funciones desarrolladas para este análisis
+```
+
+<!-- incluir Figura de WKREBUILD -->
+
+## bootstrap/initial
+
+Los insumos esenciales para el análisis incluyen el resultado del ajuste del modelo de evaluación de stock y el conjunto actual de puntos de referencia.
+
+Por ejemplo, el archivo bootstrap/initial/data/sol274.rda contiene los siguientes objetos:
+
+**run**: Última evaluación de stock AAP para `sol.27.4` (WGNSSK 2023), representada como un objeto de clase `FLStock`. Este objeto no refleja exactamente la evaluación de `sol.27.4` del WGNSSK 2023, ya que ha sido modificado artificialmente para fines demostrativos.
+
+**refpts**: Objeto de clase `FLPar` que contiene los puntos de referencia biológicos y operativos calculados para este stock en el último benchmark (ICES, 2020).
+
+La incertidumbre en la dinámica pasada y en las condiciones iniciales puede haber sido cuantificada previamente, por ejemplo, mediante el procedimiento de muestreo McMC disponible en el modelo de evaluación de stock, mediante un bootstrap de las entradas del modelo o a través de un conjunto de ajustes de modelos. Si ese es el caso, los pasos de condicionamiento en `data.R` deben adaptarse en consecuencia.
+
+
+# OM conditioning, `data.R`
+
+From the stock assessment run, or a set of chosen ensemble runs, an operating model (OM) is to be constructed to evaluate the alternative advice rules by introducing some of the potential uncertainty in future dynamics, in this case in recruitment.
+
+First, one or multiple stock-recruitment relationships are fitted to the data, and then to bootstrapped series of the stock-recruits pairs, following the approach applied in ICES to category 1 stocks [@ICESrefpts_2022].
+
+
+
