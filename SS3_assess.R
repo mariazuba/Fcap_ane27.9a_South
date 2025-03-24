@@ -154,21 +154,28 @@ R0 = params(sr)[2, 2, drop=TRUE]
 B0 = params(sr)[3, 2, drop=TRUE]
 
 
-sr1 = srrTMB(as.FLSR(stk2,
+sr1 = srrTMB(as.FLSR(stk,
                      model=bevholtSV),
-             spr0=mean(spr0y(stk2)),
+             spr0=mean(spr0y(stk)),
              r0.pr=c(R0,0.0001),
              s=s,
              s.est=F)
 
+params(sr1)
 plot(sr1)
-plotsrs(sr1)
+plotsrs(sr1,b0=T)+
+  geom_hline(yintercept = R0,linetype=2)
+
 
 
 
 idxs =ss3om::readFLIBss3(model)
 # idx1=idxs$polyvalent_sp_cpue
 # idx1@range[c("startf","endf")] = c(6/12,7/12)
+
+plot(idxs)+theme_bw()+
+  ylab("Biomass")+xlab("Year")
+
 
 plotdyn(stk)+
   ggtitle(paste0(stk@name))
@@ -179,3 +186,10 @@ plotbioyr(stk)+
 
 plotbioage(stk)+
   ggtitle(paste0(stk@name))
+
+
+## Add uncertainty
+
+
+# Read `ssmvln` [(Kell et al. 2023)](https://www.iccat.int/Documents/CVSP/CV080_2023/n_4/CV080040837.pdf) to generate random recruitment trajectories (see https://github.com/laurieKell/SCRS-papers/blob/main/mvln) 
+
