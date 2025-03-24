@@ -1,3 +1,4 @@
+
 # SS3
 
 
@@ -7,7 +8,10 @@ library(icesTAF)
 dir <- "boot/initial/software"       # Define the directory for the software
 mkdir(dir)
 # Optionally, download the SS3 executable for a specific version
-r4ss::get_ss3_exe("boot/initial/software", version = "v3.30.22.1")
+r4ss::get_ss3_exe("boot/data/Lastyear", version = "v3.30.23")
+
+
+# SS3
 
 
 wd<-"boot/data/Lastyear"
@@ -31,6 +35,7 @@ subset(fatage_subset,Yr=="2024")
 mean(subset(fatage_subset, Yr == "2024")[,11])
 mean(subset(fatage_subset, Yr == "2023")[,11])
 mean(subset(fatage_subset, Yr == "2021")[,11])
+
 
 
 # Load packages
@@ -144,4 +149,5 @@ sr1 = srrTMB(as.FLSR(stka,
              r0.pr=c(R0,0.0001),
              s=s,
              s.est=F)
+
 
