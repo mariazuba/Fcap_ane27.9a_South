@@ -65,7 +65,7 @@ library(r4ss)
 dir01 <- "boot/data/Lastyear"
 run = "ane.27.9aS"
 stk = ss3om::readFLSss3(dir01)
-stk = simplify(stk)
+#stk = simplify(stk)
 # Fill NAs
 stk@m.spwn[] = 0
 stk@harvest.spwn[] = 0 
@@ -74,6 +74,8 @@ stk@name = run
 stk@desc = "2024, ICES, SS3"
 
 
+
+metrics(stk)
 ## Plot SS3 Stock Dynamics
 
 #Seasonal  stock trajectories
@@ -95,7 +97,10 @@ plot(stk,
   facet_wrap(~qname,scales="free_y")
 
 
-
+metrics=list(SSB=function(x)unitSums(ssb(x)[,,,2]),
+             F=function(x)unitMeans(fbar(x)),
+             Catch=function(x)unitSums(catch(x)),
+             Rec=function(x)unitSums(rec(x)[,,,3]))
 
 #Stock assessment trajectories at age
 plotdyn(stk)+

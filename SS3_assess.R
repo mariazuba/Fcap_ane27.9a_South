@@ -77,9 +77,9 @@ stk@refpts = bms[c("Fmsy", "Fpa", "Btrigger", "Bpa", "Blim")]
 # The option osa=TRUE allows to plot the one-step-ahead forecast for SSB and recruitment through 2023,
 # while omitting 2023 for F and Catch.
 plotAdvice(stk, osa = T)
-
 rec(stk)
 ssb(stk)
+
 
 # Next make a FLStockR with iterations generated MVLN Monte-Carlo (default nsim = 1000) to depict
 # uncertainty

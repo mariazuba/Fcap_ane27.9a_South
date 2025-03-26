@@ -152,7 +152,7 @@ plotsrs(fits)
 
 # BOOTSTRAP and SELECT model by largest logLik **
 srpars <- bootstrapSR(run, 
-                      iters=it,
+                      iters=15,
                       model=bevholtSV,
                       method="best")
 
