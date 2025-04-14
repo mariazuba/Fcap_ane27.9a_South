@@ -1,0 +1,306 @@
+---
+title: "TAC boquerón"
+output: word_document
+date: "2025-04-02"
+---
+
+
+
+
+
+```{r setup, knitr, echo=FALSE, message=FALSE, warning=FALSE}
+library(knitr)
+opts_chunk$set(echo=FALSE, message=FALSE, warning=FALSE, fig.pos="H",fig.align = 'center',out.width = "95%" )
+# To print the inline numbers using normal notation and not scientific notation.
+options(scipen=999)
+
+```
+
+
+```{r}
+# Cargar librerías
+library(tibble)
+library(dplyr)
+library(kableExtra)
+library(flextable)
+library(officer)
+library(ggplot2)
+
+```
+
+La tabla presenta un resumen histórico del Total Admisible de Captura (TAC) y datos relacionados con la pesquería del boquerón (*Engraulis encrasicolus*) en la subzona 9a, desde 1987 hasta 2025. 
+
+Durante los primeros años (1987–1992), el stock no fue evaluado, con una TAC aque incrementa de 4.600 toneladas hasta las 12000.
+
+A partir de 1993, la UE comenzó a recomendar TAC precautorios???, y desde entonces, las recomendaciones fueron variando según criterios como niveles de captura históricos o promedios excluyendo años considerados atípicos (como 1995 o 1998).
+
+Entre 2011 y 2015, se emitieron recomendaciones genéricas como “reducir capturas” o simplemente se indicó que la pesquería parecía sostenible. 
+
+Desde 2016 en adelante, las recomendaciones se centraron en enfoques precautorios y, desde 2023, en el enfoque de rendimiento máximo sostenible (MSY).
+
+En los últimos años, se desglosaron las recomendaciones y TAC por componente (oeste y sur), con una tendencia a establecer límites diferenciados. 
+
+También se observa que los desembarques oficiales y las capturas estimadas por ICES no siempre coinciden con los TAC asignados, especialmente en los años más recientes.
+
+
+Antecentes de 
+
+```{r}
+# Crear la tabla como un tibble
+tac_ane_9a <- tribble(
+  ~Año, ~Recomendacion_CIEM, ~Captura_aconsejada, ~TAC_UE, ~Desembarques_oficiales, ~Capturas_registradas_ICES,
+  "1987", "No evaluado", NA, 4600, 5516, NA,
+  "1988", "No evaluado", NA, 6000, 4173, 4721,
+  "1989", "No evaluado", NA, 6000, 5259, 5944,
+  "1990", "No evaluado", NA, 9000, 2889, 6487,
+  "1991", "No evaluado", NA, 9000, 3753, 5922,
+  "1992", "No evaluado", NA, 12000, 2351, 3166,
+  "1993", "TAC precautorio si es necesario", NA, 12000, 1130, 1984,
+  "1994", "TAC precautorio si es necesario", NA, 12000, 1619, 3388,
+  "1995", "TAC precautorio si es necesario", NA, 12000, 10106, 12956,
+  "1996", "TAC precautorio si es necesario", NA, 12000, 6256, 4595,
+  "1997", "TAC como antes de 1995 si es necesario", NA, 12000, 4614, 5295,
+  "1998", "Sin recomendación", NA, 12000, 8717, 10962,
+  "1999", "TAC como antes de 1995 si es necesario", 4600, 13000, 7486, 7409,
+  "2000", "Pesca <1995, plan gestión", 4600, 10000, 2717, 2502,
+  "2001", "Media sin 1995 y 1998", 4900, 10000, 5907, 9098,
+  "2002", "Media sin 1995 y 1998", 4900, 8000, 5636, 8806,
+  "2003", "Media sin 1995, 1998, 2001", 4700, 8000, 6146, 5269,
+  "2004", "Media sin 1995, 1998, 2001, 2002", 4700, 8000, 6644, 5844,
+  "2005", "Igual que 2004", 4700, 8000, 4596, 4515,
+  "2006", "Igual que 2004", 4700, 8000, 4131, 4491,
+  "2007", "Prom. 1988–2005 sin 1995, 98, 01, 02", 4800, 8000, 6282, 6454,
+  "2008", "Prom. 1988–2006 sin 1995, 98, 01, 02", 4800, 8000, 3244, 3508,
+  "2009", "Igual que año anterior", 4800, 8000, 2349, 3013,
+  "2010", "Igual que año anterior", 4800, 8000, 3291, 3210,
+  "2011", "Ver escenarios", NA, 7600, 10134, 10076,
+  "2012", "Reducir capturas", NA, 8600, 5589, 5589,
+  "2013", "Pesca histórica sostenible", NA, 8800, 5632, 5632,
+  "2014", "Pesca histórica sostenible", NA, 8800, 7739, 10332,
+  "2015", "Sin recomendación de captura", NA, 9700, 9420, 9597,
+  "2016", "Recomendación en el año", 15000, 15000, 13583, 13740,
+  "2017", "Sin recomendación de captura", NA, 12500, 13277, 14705,
+  "2018", "Sin recomendación de captura", NA, 12500, 13640, 13732
+)
+```
+
+
+
+
+
+```{r}
+# Crear la tabla
+tac_ane_9a_2 <- tribble(
+  ~Año, ~Recomendacion_CIEM, ~Captura_aconsejada, ~TAC_UE, ~Desembarques_oficiales, ~Capturas_CIEM,
+  "2018–2019", "Enfoque precautorio (componente oeste)", 13308, 17068, 13755, 13907,
+  "2018–2019", "Enfoque precautorio (componente sur)", 3760, 17068, 13755, 13907,
+  "2019–2020", "Enfoque precautorio (componente oeste)",2662, 10240, 9008, 9095,
+  "2019–2020", "Enfoque precautorio (componente sur)", 6290, 10240, 9008, 9095,
+  "2020–2021", "Enfoque precautorio (componente oeste)", 4347, 15669, 13243, 13364,
+  "2020–2021", "Enfoque precautorio (componente sur)", 11322, 15669, 13243, 13364,
+  "2021–2022", "Enfoque precautorio (componente oeste)", 7824, 15005, 17850, 17981,
+  "2021–2022", "Enfoque precautorio (componente sur)", 7181, 15005, 17850, 17981,
+  "2022–2023", "Enfoque precautorio (componente oeste)", 14083, 15777,11014,11231,
+  "2022–2023", "Enfoque precautorio (componente sur)", 1694, 15777,11014,11231,
+  "2023–2024", "Enfoque precautorio (componente oeste)", 18354,20555, 10430,10491,
+  "2023–2024", "Enfoque precautorio (componente sur)", 2201, 20555, 10430,10491,  
+  "2024–2025", "Enfoque precautorio (componente oeste)", 8480,9449,NA,NA,
+  "2024–2025", "Enfoque precautorio (componente sur)", 969, 9449,NA,NA
+)
+# Reemplazar valores repetidos por ""
+tac_ane_9a_limpio <- tac_ane_9a_2 %>%
+  mutate(
+    Año = ifelse(Año == lag(Año), Año, ""),
+    TAC_UE = ifelse(TAC_UE == lag(TAC_UE), as.character(TAC_UE), ""),
+    Desembarques_oficiales = ifelse(Desembarques_oficiales == lag(Desembarques_oficiales), as.character(Desembarques_oficiales), ""),
+    Capturas_CIEM = ifelse(Capturas_CIEM == lag(Capturas_CIEM),as.character(Capturas_CIEM), "")
+  )
+
+
+```
+
+
+```{r}
+# Mostrar la tabla formateada
+ft1<-flextable(tac_ane_9a) %>%
+  set_caption("TAC histórico del boquerón (ANE 9a) – Componentes agrupados")%>% 
+  fontsize( size = 9, part = "all")%>%
+  width(j = c(1,2), width = c(1,2.5)) %>% 
+  theme_booktabs() 
+
+# ft %>%
+#   set_header_labels(FLEETTYPE = "Fleet Type", CODE = "Description") %>%
+#   width(j = c(1,2,3), width = c(1.8,0.8,4)) %>% 
+#   fontsize( size = 9, part = "all") %>% 
+#   set_caption( caption= as_paragraph(as_chunk(" Descripción de los tipos de flota de cerco que operan en el golfo de Cádiz.",props = fp_text_default(font.family = "Calibri", bold=TRUE,
+#                                         font.size = 9)))) %>% 
+#   theme_vanilla()  
+
+
+ft1.1<-flextable(tac_ane_9a)%>% flextable::padding(padding.top = 0, part = "body")%>%
+       flextable::padding(padding.bottom  = 0, part = "body")%>% 
+  fontsize( size = 9, part = "all")%>%
+  width(j = c(1,2), width = c(1.5,2.5))
+ft1.1
+```
+
+
+```{r}
+# Mostrar con flextable
+ft2<-flextable(tac_ane_9a_limpio) %>%
+  set_caption("TAC histórico del boquerón (ANE 9a) – Componentes agrupados")%>% 
+  fontsize( size = 9, part = "all")%>%
+  width(j = c(1,2), width = c(1.5,2.5)) %>%
+  theme_booktabs() 
+
+
+ft2.2<-flextable(tac_ane_9a_limpio)%>% flextable::padding(padding.top = 0, part = "body")%>%
+       flextable::padding(padding.bottom  = 0, part = "body")%>% 
+  fontsize( size = 9, part = "all")%>%
+  width(j = c(1,2), width = c(1.5,2.5))
+ft2.2
+```
+
+
+```{r eval=FALSE}
+# Añadir columna de contexto (opcional)
+
+
+# Unir verticalmente
+df_total <- rbind(tac_ane_9a, tac_ane_9a_limpio)
+
+# Crear flextable
+flextable(df_total)
+
+```
+
+```{r}
+library(tidyverse)
+
+# Convertir a formato largo
+tac_long <- tac_ane_9a %>%
+  pivot_longer(cols = c(Captura_aconsejada, TAC_UE, Desembarques_oficiales, Capturas_registradas_ICES),
+               names_to = "Tipo", values_to = "Capturas")
+
+# Crear gráfico
+ggplot(tac_long, aes(x = Año, y = Capturas, color = Tipo, group = Tipo)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(title = "Comparativa de Capturas y TAC para boquerón (9a)",
+       x = "Año", y = "Toneladas",
+       color = "Tipo de dato") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+
+ggplot() +
+  # Barras
+  geom_col(data = filter(tac_long, Tipo %in% c("Desembarques_oficiales", "Capturas_registradas_ICES")),
+           aes(x = Año, y = Capturas, fill = Tipo), position = "dodge") +
+  
+  # Líneas
+  geom_line(data = filter(tac_long, Tipo %in% c("Captura_aconsejada", "TAC_UE")),
+            aes(x = Año, y = Capturas, color = Tipo, group = Tipo), size = 1) +
+  geom_point(data = filter(tac_long, Tipo %in% c("Captura_aconsejada", "TAC_UE")),
+             aes(x = Año, y = Capturas, color = Tipo, group = Tipo), size = 2) +
+  
+  # Colores personalizados para las líneas
+  scale_color_manual(values = c("Captura_aconsejada" = "blue", "TAC_UE" = "red")) +
+  
+  # Título y ejes
+  scale_y_continuous(labels = scales::comma) +
+  labs(title = "Comparativa de Capturas y TAC para boquerón (9a)",
+       x = "Año", y = "Toneladas",
+       fill = "Capturas registradas",
+       color = "Recomendaciones y TAC") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+
+
+```{r}
+
+load("boot/data/Lastyear/update2024/inputData.RData")
+
+
+# Calcula la proporción trimestral por año
+catchprop <- catch %>%
+  filter(year > -999) %>% # Filtrar años válidos
+  group_by(year) %>% # Agrupar por año
+  mutate(total_catch = sum(catch), # Suma total de capturas por año
+         proportion = catch / total_catch) %>% # Calcular proporción por trimestre
+  ungroup()
+
+catchpropSem <- catch %>%
+  filter(year > -999) %>%
+  mutate(semester = if_else(seas %in% c(1, 2), 1, 2)) %>%  # Crear variable de semestre
+  group_by(year, semester) %>%
+  summarise(catch_semester = sum(catch), .groups = "drop") %>%  # Sumar captura por semestre y año
+  group_by(year) %>%
+  mutate(
+    total_catch = sum(catch_semester),                # Captura total del año
+    proportion = catch_semester / total_catch         # Proporción semestral
+  ) %>%
+  ungroup()
+
+
+# # Cargar el paquete
+# library(writexl)
+# # Guardar el archivo
+# write_xlsx(catchpropSem, "assessment_2024/data/update2024/catchpropSem.xlsx")
+
+
+```
+
+
+
+
+
+```{r}
+# Calcular proporciones medias por semestre
+media_semestres <- catchpropSem %>%
+  group_by(semester) %>%
+  summarise(media = mean(proportion, na.rm = TRUE))
+
+# Crear el gráfico
+ggplot(catchpropSem, aes(x = year, y = proportion, color = as.factor(semester), group = semester)) +
+  geom_line(size = 1.1) +
+  geom_point() +
+  # Líneas horizontales con medias
+  geom_hline(data = media_semestres, aes(yintercept = media, color = as.factor(semester)),
+             linetype = "dashed", size = 0.8, show.legend = FALSE) +
+  geom_vline(aes(xintercept = 2018))+
+  # Etiquetas con el valor medio
+  geom_text(data = media_semestres,
+            aes(x = max(catchpropSem$year) - 0.7, y = media,
+                label = paste0("media", round(media, 2)),
+                color = as.factor(semester)),
+            hjust = 0, vjust = -0.5, size = 3.5, show.legend = FALSE) +
+  scale_color_manual(values = c("1" = "blue", "2" = "red"),
+                     labels = c("Semestre 1", "Semestre 2"),
+                     name = "Semestre") +
+  labs(title = "Proporción semestral de capturas por año",
+       x = "Año",
+       y = "Proporción de capturas") +
+  theme_minimal() +
+  coord_cartesian(xlim = c(min(catchpropSem$year), max(catchpropSem$year) + 3))
+```
+
+
+```{r}
+catchpropSem <- catchpropSem %>%
+  mutate(
+    catch_semester = round(catch_semester, 0),
+    total_catch = round(total_catch, 0),
+    proportion = round(proportion, 3)  # Opcional: redondear proporción a 3 decimales
+  )
+
+flextable(catchpropSem) %>% flextable::padding(padding.top = 0, part = "body")%>%
+       flextable::padding(padding.bottom  = 0, part = "body")
+
+```
+
