@@ -29,22 +29,22 @@ library(tidyr)
 library(readr) # Para parse_number
 ```
 
-La tabla presenta un resumen histórico del Total Admisible de Captura (TAC) y datos relacionados con la pesquería del boquerón (*Engraulis encrasicolus*) en la subzona 9a, desde 1987 hasta 2025. 
 
-Durante los primeros años (1987–1992), el stock no fue evaluado, con una TAC aque incrementa de 4.600 toneladas hasta las 12000.
+Entre 1987 y 2012, el stock de boquerón en la División 9a no fue evaluado científicamente. Durante este período, la Unión Europea estableció un Total Admisible de Capturas (TAC) que aumentó progresivamente desde 4.600 toneladas en 1987 hasta 12.000 toneladas en 1992. A partir de ese año y hasta 1998, el TAC se mantuvo en torno a 12.000 toneladas, con un incremento a 13.000 toneladas en 1999. Desde el año 2000, los TAC comenzaron a disminuir, estabilizándose en valores cercanos a las 8.000 toneladas hasta 2015. Entre 2011 y 2015, las recomendaciones científicas adoptaron un enfoque cualitativo, incluyendo indicaciones generales como “reducir capturas” o referencias a la sostenibilidad de la pesquería, sin cifras cuantitativas.
 
-A partir de 1993, la UE comenzó a recomendar TAC precautorios???, y desde entonces, las recomendaciones fueron variando según criterios como niveles de captura históricos o promedios excluyendo años considerados atípicos (como 1995 o 1998).
+Hasta 2017, el calendario de gestión se basó en el año natural (1 de enero al 31 de diciembre). El TAC se fijaba a finales del año anterior, y era aplicable para el año completo. A partir de 2016, se registraron incrementos en el TAC, alcanzando valores en torno a 15.000 toneladas, con un máximo histórico de 20.000 toneladas en el ciclo de gestión 2023–2024.
 
-Entre 2011 y 2015, se emitieron recomendaciones genéricas como “reducir capturas” o simplemente se indicó que la pesquería parecía sostenible. 
+En 2018, el Consejo Internacional para la Exploración del Mar (ICES) introdujo un nuevo calendario de gestión para el stock de boquerón en la División 9a, estableciendo un ciclo anual comprendido entre el 1 de julio y el 30 de junio del año siguiente (ICES, 2018). Posteriormente, en 2024, ICES propuso la transición hacia un calendario de gestión alineado nuevamente con el año natural, aplicable a partir del 1 de enero de 2024 (ICES, 2024c).
 
-Desde 2016 en adelante, las recomendaciones se centraron en enfoques precautorios y, desde 2023, en el enfoque de rendimiento máximo sostenible (MSY).
+En 2024, ICES señaló que el establecimiento de un TAC único para toda la División 9a limita la capacidad de controlar las tasas de explotación de cada componente del stock de manera independiente, lo cual podría generar una presión pesquera desigual. En los dos ciclos de gestión más recientes, los desembarques del componente sur superaron las capturas recomendadas para esa unidad en aproximadamente cinco y tres veces, respectivamente (ICES, 2024x).
 
-En los últimos años, se desglosaron las recomendaciones y TAC por componente (oeste y sur), con una tendencia a establecer límites diferenciados. 
+Con base en el análisis de la estructura poblacional del boquerón en la División 9a, ICES acordó en 2024 dividir el antiguo stock ane.27.9a en dos unidades de gestión independientes: el stock occidental (ane.27.9a.w), que incluye las Subdivisiones 9a Norte, 9a Centro-Norte y 9a Centro-Sur; y el stock sur (ane.27.9a.s), que abarca el golfo de Cádiz y la costa sur de Portugal (**ICES, 2024c; Figura x Áreas de ICES**).
 
-También se observa que los desembarques oficiales y las capturas estimadas por ICES no siempre coinciden con los TAC asignados, especialmente en los años más recientes.
+(Falta incorporar referencias...)
+* https://ices-library.figshare.com/articles/report/Anchovy_i_Engraulis_i_i_encrasicolus_i_in_Division_9_a_Atlantic_Iberian_waters_/25019153?file=51096983
 
+** https://ices-library.figshare.com/articles/report/Anchovy_i_Engraulis_encrasicolus_i_in_the_southern_part_of_Division_9_a_Gulf_of_Cadiz_and_southern_coast_of_Portugal_Replacing_advice_provided_in_June_2024_/27992360?file=51125813
 
-Antecentes de 
 
 ```{r}
 # Crear la tabla como un tibble
@@ -105,8 +105,8 @@ tac_ane_9a_2 <- tribble(
   "2022–2023", "Enfoque precautorio (componente sur)", 1694, 15777,11014,11231,
   "2023–2024", "Enfoque precautorio (componente oeste)", 18354,20555, 10430,10491,
   "2023–2024", "Enfoque precautorio (componente sur)", 2201, 20555, 10430,10491,  
-  "2024–2025", "Enfoque precautorio (componente oeste)", 8480,9449,NA,NA,
-  "2024–2025", "Enfoque precautorio (componente sur)", 969, 9449,NA,NA
+  "2024–2025", "Enfoque precautorio (stock oeste)", 22481,22481,NA,NA,
+  "2025","Enfoque precautorio (stock sur)",7266,7266,NA,NA
 )
 # Reemplazar valores repetidos por ""
 tac_ane_9a_limpio <- tac_ane_9a_2 %>%
@@ -116,6 +116,23 @@ tac_ane_9a_limpio <- tac_ane_9a_2 %>%
     Desembarques_oficiales = ifelse(Desembarques_oficiales == lag(Desembarques_oficiales), as.character(Desembarques_oficiales), ""),
     Capturas_registradas_ICES = ifelse(Capturas_registradas_ICES == lag(Capturas_registradas_ICES),as.character(Capturas_registradas_ICES), "")
   )
+
+
+
+
+
+tac_ane_9a_limpio <- tac_ane_9a_2 %>%
+  group_by(Año) %>%
+  mutate(
+    TAC_UE = ifelse(row_number() == 1, as.character(TAC_UE), ""),
+    Desembarques_oficiales = ifelse(row_number() == 1, as.character(Desembarques_oficiales), ""),
+    Capturas_registradas_ICES = ifelse(row_number() == 1, as.character(Capturas_registradas_ICES), "")
+  ) %>%
+  ungroup() %>%
+  mutate(
+    Año = ifelse(duplicated(Año), "", Año)
+  )
+
 
 
 ```
@@ -220,8 +237,8 @@ tac_ane_resumen<- tac_ane_9a_2 %>%
   summarise(
     Captura_aconsejada = sum(Captura_aconsejada, na.rm = TRUE),
     TAC_UE = unique(TAC_UE),  # Si el valor es el mismo para sur y oeste
-    Desembarques_oficiales = sum(Desembarques_oficiales, na.rm = TRUE),
-    Capturas_registradas_ICES = sum(Capturas_registradas_ICES, na.rm = TRUE)
+    Desembarques_oficiales = unique(Desembarques_oficiales),
+    Capturas_registradas_ICES = unique(Capturas_registradas_ICES)
   ) %>%
   ungroup()
 
@@ -400,6 +417,8 @@ write_xlsx(data_unificada_ancha, path = "data_unificada_ancha.xlsx")
 
 ```
 
+
+# Capturas semestrales 
 
 ```{r}
 
