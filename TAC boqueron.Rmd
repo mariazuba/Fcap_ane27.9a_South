@@ -25,7 +25,8 @@ library(kableExtra)
 library(flextable)
 library(officer)
 library(ggplot2)
-
+library(tidyr)
+library(readr) # Para parse_number
 ```
 
 La tabla presenta un resumen histórico del Total Admisible de Captura (TAC) y datos relacionados con la pesquería del boquerón (*Engraulis encrasicolus*) en la subzona 9a, desde 1987 hasta 2025. 
@@ -91,7 +92,7 @@ tac_ane_9a <- tribble(
 ```{r}
 # Crear la tabla
 tac_ane_9a_2 <- tribble(
-  ~Año, ~Recomendacion_CIEM, ~Captura_aconsejada, ~TAC_UE, ~Desembarques_oficiales, ~Capturas_CIEM,
+  ~Año, ~Recomendacion_CIEM, ~Captura_aconsejada, ~TAC_UE, ~Desembarques_oficiales, ~Capturas_registradas_ICES,
   "2018–2019", "Enfoque precautorio (componente oeste)", 13308, 17068, 13755, 13907,
   "2018–2019", "Enfoque precautorio (componente sur)", 3760, 17068, 13755, 13907,
   "2019–2020", "Enfoque precautorio (componente oeste)",2662, 10240, 9008, 9095,
@@ -113,12 +114,36 @@ tac_ane_9a_limpio <- tac_ane_9a_2 %>%
     Año = ifelse(Año == lag(Año), Año, ""),
     TAC_UE = ifelse(TAC_UE == lag(TAC_UE), as.character(TAC_UE), ""),
     Desembarques_oficiales = ifelse(Desembarques_oficiales == lag(Desembarques_oficiales), as.character(Desembarques_oficiales), ""),
-    Capturas_CIEM = ifelse(Capturas_CIEM == lag(Capturas_CIEM),as.character(Capturas_CIEM), "")
+    Capturas_registradas_ICES = ifelse(Capturas_registradas_ICES == lag(Capturas_registradas_ICES),as.character(Capturas_registradas_ICES), "")
   )
 
 
 ```
 
+
+```{r}
+
+# Paso 2: Crear variable para identificar componente
+tac_ordenado <- tac_ane_9a_2 %>%
+  mutate(Componente = case_when(
+    grepl("sur", Recomendacion_CIEM) ~ "Captura_sur",
+    grepl("oeste", Recomendacion_CIEM) ~ "Captura_oeste"
+  ))
+
+# Paso 3: Separar capturas por componente
+capturas_por_componente <- tac_ordenado %>%
+  select(Año, Componente, Captura_aconsejada) %>%
+  pivot_wider(names_from = Componente, values_from = Captura_aconsejada)
+
+# Paso 4: Extraer columnas extra desde las filas "sur" (que son las que tienen datos)
+otras_columnas <- tac_ordenado %>%
+  filter(grepl("sur", Recomendacion_CIEM)) %>%
+  select(Año, TAC_UE, Desembarques_oficiales, Capturas_registradas_ICES)
+
+# Paso 5: Unir todo en una sola tabla
+tac_final <- left_join(capturas_por_componente, otras_columnas, by = "Año")
+
+```
 
 ```{r}
 # Mostrar la tabla formateada
@@ -182,28 +207,46 @@ tac_long <- tac_ane_9a %>%
   pivot_longer(cols = c(Captura_aconsejada, TAC_UE, Desembarques_oficiales, Capturas_registradas_ICES),
                names_to = "Tipo", values_to = "Capturas")
 
-# Crear gráfico
-ggplot(tac_long, aes(x = Año, y = Capturas, color = Tipo, group = Tipo)) +
-  geom_line(size = 1) +
-  geom_point(size = 2) +
-  scale_y_continuous(labels = scales::comma) +
-  labs(title = "Comparativa de Capturas y TAC para boquerón (9a)",
-       x = "Año", y = "Toneladas",
-       color = "Tipo de dato") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+
+```{r}
+# Convertir a formato largo
+
+
+tac_ane_resumen<- tac_ane_9a_2 %>%
+  group_by(Año) %>%
+  summarise(
+    Captura_aconsejada = sum(Captura_aconsejada, na.rm = TRUE),
+    TAC_UE = unique(TAC_UE),  # Si el valor es el mismo para sur y oeste
+    Desembarques_oficiales = sum(Desembarques_oficiales, na.rm = TRUE),
+    Capturas_registradas_ICES = sum(Capturas_registradas_ICES, na.rm = TRUE)
+  ) %>%
+  ungroup()
+
+tac_long_2 <- tac_ane_resumen %>%
+  pivot_longer(cols = c(Captura_aconsejada, TAC_UE, Desembarques_oficiales, Capturas_registradas_ICES),
+               names_to = "Tipo", values_to = "Capturas")
+
+
+```
 
 
 
-ggplot() +
+```{r fig.width=8,fig.height=5}
+tac_long1<-tac_long[,c("Año","Tipo","Capturas")]
+data_all<-rbind(tac_long1,tac_long_2)
+
+p1<-ggplot() +
   # Barras
-  geom_col(data = filter(tac_long, Tipo %in% c("Desembarques_oficiales", "Capturas_registradas_ICES")),
+  geom_col(data = filter(data_all, Tipo %in% c("Desembarques_oficiales", "Capturas_registradas_ICES")),
            aes(x = Año, y = Capturas, fill = Tipo), position = "dodge") +
   
   # Líneas
-  geom_line(data = filter(tac_long, Tipo %in% c("Captura_aconsejada", "TAC_UE")),
+  geom_line(data = filter(data_all, Tipo %in% c("Captura_aconsejada", "TAC_UE")),
             aes(x = Año, y = Capturas, color = Tipo, group = Tipo), size = 1) +
-  geom_point(data = filter(tac_long, Tipo %in% c("Captura_aconsejada", "TAC_UE")),
+  geom_point(data = filter(data_all, Tipo %in% c("Captura_aconsejada", "TAC_UE")),
              aes(x = Año, y = Capturas, color = Tipo, group = Tipo), size = 2) +
   
   # Colores personalizados para las líneas
@@ -214,13 +257,15 @@ ggplot() +
   labs(title = "Comparativa de Capturas y TAC para boquerón (9a)",
        x = "Año", y = "Toneladas",
        fill = "Capturas registradas",
-       color = "Recomendaciones y TAC") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
+       color = "") +
+  theme_minimal() +theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+    legend.text = element_text(size = 8),
+    legend.title = element_text(size = 9),
+    legend.position = "top"
+  )
 ```
-
-
 
 ```{r}
 
@@ -257,14 +302,169 @@ catchpropSem <- catch %>%
 ```
 
 
+```{r}
 
+# Base 1: desde el año mínimo hasta 2017
+catch_base1 <- catchpropSem %>%
+  filter(year <=2018) %>%
+  select(year, total_catch) %>%
+  distinct()
+
+# Base 2: 2018 a 2024, sumando S2(t) + S1(t+1)
+catch_base2 <- catchpropSem %>%
+  filter(year >= 2018 & year <= 2024) %>%
+  select(year, semester, catch_semester) %>%
+  mutate(year_adjusted = ifelse(semester == 1, year - 1, year)) %>%
+  group_by(year_adjusted) %>%
+  summarise(total_catch = sum(catch_semester, na.rm = TRUE)) %>%
+  filter(year_adjusted >= 2018 & year_adjusted <= 2023) %>%   # ajustamos el rango
+  mutate(year = paste(year_adjusted, year_adjusted + 1, sep = "–")) %>%
+  select(year, total_catch)
+
+
+```
+
+```{r fig.width=8,fig.height=6}
+
+data_all_sem<-rbind(catch_base1,catch_base2) %>% mutate(Tipo="Captura_ane9a_south")
+data_sur_tac<-tac_final %>% select("Año","Captura_sur")%>% mutate(Tipo="Captura 9a sur aconsejada")
+data_oeste_tac<-tac_final %>% select("Año","Captura_oeste")%>% mutate(Tipo="Captura 9a oeste aconsejada")
+
+# Preparar data_all_sem para que tenga las mismas columnas que data_all
+data_all_sem_renamed <- data_all_sem %>%
+  rename(Año = year, Capturas = total_catch)
+
+data_sur_tac_renamed <- data_sur_tac %>%
+  rename(Capturas = Captura_sur)
+
+data_oeste_tac_renamed <- data_oeste_tac %>%
+  rename(Capturas = Captura_oeste)
+
+# Unir ambas bases
+data_unificada <- bind_rows(data_all, data_all_sem_renamed,data_sur_tac_renamed, data_oeste_tac_renamed )
+
+data_unificada <- data_unificada %>%
+  mutate(Tipo = recode(Tipo,
+                       "Captura_aconsejada" = "Captura 9a aconsejada",
+                       "TAC_UE" = "TAC 9a UE",
+                       "Desembarques_oficiales" = "Desembarques 9a",
+                       "Capturas_registradas_ICES" = "Capturas 9a ICES",
+                       "Captura_ane9a_south" = "Captura 9a sur"))
+
+
+ggplot() +
+  # Barras
+  geom_col(data = filter(data_unificada, Tipo %in% c("Capturas 9a ICES","Captura 9a sur")),
+           aes(x = Año, y = Capturas, fill = Tipo), position = "dodge") +
+
+  
+  # Líneas
+  geom_line(data = filter(data_unificada, Tipo %in% c("Captura 9a aconsejada","Captura 9a sur aconsejada", "Captura 9a oeste aconsejada","TAC 9a UE")),
+            aes(x = Año, y = Capturas, color = Tipo, group = Tipo), size = 1) +
+  geom_point(data = filter(data_unificada, Tipo %in% c("Captura 9a aconsejada", "Captura 9a sur aconsejada","Captura 9a oeste aconsejada","TAC 9a UE")),
+             aes(x = Año, y = Capturas, color = Tipo, group = Tipo), size = 2) +
+
+  # Colores personalizados para las líneas
+  scale_color_manual(values = c("Captura 9a aconsejada" = "blue","Captura 9a sur aconsejada"="green", "Captura 9a oeste aconsejada"="darkgreen","TAC 9a UE" = "red")) +
+  
+  # Título y ejes
+  scale_y_continuous(labels = scales::comma) +   geom_vline(xintercept = which(levels(as.factor(data_unificada$Año)) == "2018–2019"),
+           linetype = "dashed", color = "black", size = 0.8)+
+  labs(title = "",
+       x = "Año", y = "Toneladas",
+       fill = "",
+       color = "") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
+    legend.text = element_text(size = 10),
+    legend.title = element_text(size = 10),
+    legend.position = "right"
+  )
+
+```
+```{r}
+
+
+data_unificada_ancha <- data_unificada %>%
+  pivot_wider(
+    names_from = Tipo,
+    values_from = Capturas
+  )
+
+library(writexl)
+
+# Guardar en Excel
+write_xlsx(data_unificada_ancha, path = "data_unificada_ancha.xlsx")
+
+
+```
 
 
 ```{r}
+
+catch_wide <- catchpropSem %>%
+  pivot_wider(
+    id_cols = c(year, total_catch),
+    names_from = semester,
+    values_from = c(catch_semester, proportion),
+    names_glue = "{.value}_sem{semester}"
+  )%>%
+  mutate(across(starts_with("proportion_"), ~round(., 2)))
+
+
+
+ft<-flextable(catch_wide) %>%
+  # Eliminar separador de miles en la columna year
+  colformat_int(j = "year", big.mark = "") %>%
+
+  # Formatear columnas enteras sin separador de miles
+  colformat_int(j = c("total_catch", "catch_semester_sem1", "catch_semester_sem2"),
+                big.mark = "") %>%
+
+  # Formatear proporciones con 2 decimales
+  colformat_num(j = c("proportion_sem1", "proportion_sem2"), digits = 2) %>%
+
+  # Cambiar encabezados
+  set_header_labels(
+    year = "Año",
+    total_catch = "Total",
+    catch_semester_sem1 = "Semestre 1",
+    catch_semester_sem2 = "Semestre 2",
+    proportion_sem1 = "Semestre 1",
+    proportion_sem2 = "Semestre 2"
+  ) %>%add_header_row(
+  colwidths = c(1,3, 2),
+  values = c("","Captura", "Proporción")) %>%  align(align = "center", part = "all") %>% 
+  # Ajustes de espaciado
+  padding(padding.top = 0, part = "body") %>%
+  padding(padding.bottom = 0, part = "body") %>%
+
+  # Autoajuste (opcional)
+  autofit()
+ft
+save_as_image(ft, path = "tabla_capturas.png")
+
+```
+
+```{r eval=F}
+include_graphics("tabla_capturas.png")
+
+```
+
+
+```{r fig.width=8, fig.height=5}
 # Calcular proporciones medias por semestre
 media_semestres <- catchpropSem %>%
   group_by(semester) %>%
   summarise(media = mean(proportion, na.rm = TRUE))
+
+media_semestres_2018_2024 <- catchpropSem %>%
+  filter(year >= 2018, year <= 2024) %>%
+  group_by(semester) %>%
+  summarise(media = mean(proportion, na.rm = TRUE)) %>%
+  ungroup()
+
 
 # Crear el gráfico
 ggplot(catchpropSem, aes(x = year, y = proportion, color = as.factor(semester), group = semester)) +
@@ -272,6 +472,8 @@ ggplot(catchpropSem, aes(x = year, y = proportion, color = as.factor(semester), 
   geom_point() +
   # Líneas horizontales con medias
   geom_hline(data = media_semestres, aes(yintercept = media, color = as.factor(semester)),
+             linetype = "dashed", size = 0.8, show.legend = FALSE) +
+    geom_hline(data = media_semestres_2018_2024, aes(yintercept = media, color = as.factor(semester)),
              linetype = "dashed", size = 0.8, show.legend = FALSE) +
   geom_vline(aes(xintercept = 2018))+
   # Etiquetas con el valor medio
@@ -299,8 +501,5 @@ catchpropSem <- catchpropSem %>%
     proportion = round(proportion, 3)  # Opcional: redondear proporción a 3 decimales
   )
 
-flextable(catchpropSem) %>% flextable::padding(padding.top = 0, part = "body")%>%
-       flextable::padding(padding.bottom  = 0, part = "body")
 
 ```
-
