@@ -1,5 +1,5 @@
 ---
-title: "TAC boquerón"
+title: "TAC histórico del boquerón"
 output: word_document
 date: "2025-04-02"
 ---
@@ -512,6 +512,50 @@ ggplot(catchpropSem, aes(x = year, y = proportion, color = as.factor(semester), 
 ```
 
 
+```{r fig.width=8, fig.height=5}
+# Crear el gráfico con ambas medias (global y 2018–2024) y sus etiquetas
+ggplot(catchpropSem, aes(x = year, y = proportion, color = as.factor(semester), group = semester)) +
+  geom_line(size = 1.1) +
+  geom_point() +
+  
+  # Medias globales (líneas y texto)
+  geom_hline(data = media_semestres,
+             aes(yintercept = media, color = as.factor(semester)),
+             linetype = "dashed", size = 0.8, show.legend = FALSE) +
+  geom_text(data = media_semestres,
+            aes(x = max(catchpropSem$year) - 35, y = media,
+                label = paste0("media histórica = ", round(media, 2)),
+                color = as.factor(semester)),
+            hjust = 0, vjust = 1, size = 3.5, show.legend = FALSE) +
+  
+  # Medias 2018–2024 (líneas y texto)
+  geom_hline(data = media_semestres_2018_2024,
+             aes(yintercept = media, color = as.factor(semester)),
+             linetype = "dotted", size = 0.8, show.legend = FALSE) +
+  geom_text(data = media_semestres_2018_2024,
+            aes(x = max(catchpropSem$year) - 6, y = media,
+                label = paste0("media 2018–2024 = ", round(media, 2)),
+                color = as.factor(semester)),
+            hjust = 0, vjust = 1.5, size = 3.5, show.legend = FALSE) +
+  
+  # Línea vertical en 2018
+  geom_vline(xintercept = 2018, linetype = "solid") +
+  
+  # Colores y etiquetas
+  scale_color_manual(values = c("1" = "blue", "2" = "red"),
+                     labels = c("Semestre 1", "Semestre 2"),
+                     name = "Semestre") +
+  
+  # Títulos y tema
+  labs(title = "Proporción semestral de capturas por año",
+       x = "Año",
+       y = "Proporción de capturas") +
+  theme_minimal() +
+  coord_cartesian(xlim = c(min(catchpropSem$year), max(catchpropSem$year) + 3))
+
+```
+
+
 ```{r}
 catchpropSem <- catchpropSem %>%
   mutate(
@@ -522,3 +566,7 @@ catchpropSem <- catchpropSem %>%
 
 
 ```
+
+
+
+
